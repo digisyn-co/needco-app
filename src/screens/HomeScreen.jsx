@@ -1,7 +1,40 @@
+import { useState, useEffect } from "react";
 import { useApp, SERVICES } from "../context/AppContext";
+
+const ILOILO_CENTER = { lat: 10.7202, lng: 122.5621 };
+const PAVIA_CENTER = { lat: 10.7799, lng: 122.5464 };
+
+function getAreaName(lat, lng) {
+  const distIloilo = Math.sqrt(Math.pow(lat - ILOILO_CENTER.lat, 2) + Math.pow(lng - ILOILO_CENTER.lng, 2));
+  const distPavia = Math.sqrt(Math.pow(lat - PAVIA_CENTER.lat, 2) + Math.pow(lng - PAVIA_CENTER.lng, 2));
+  if (distPavia < distIloilo) return "Pavia, Iloilo";
+  return "Iloilo City";
+}
 
 export default function HomeScreen() {
   const { user, selectedService, setSelectedService, navigate } = useApp();
+  const [location, setLocation] = useState(null);
+  const [areaName, setAreaName] = useState("Iloilo City");
+  const [locError, setLocError] = useState(false);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocError(true);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocation({ lat: latitude, lng: longitude });
+        setAreaName(getAreaName(latitude, longitude));
+      },
+      () => {
+        setLocError(true);
+        setLocation(ILOILO_CENTER);
+        setAreaName("Iloilo City");
+      }
+    );
+  }, []);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
@@ -9,12 +42,14 @@ export default function HomeScreen() {
       <div style={{ padding: "20px 20px 16px", background: "var(--surface)" }}>
         <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
           <div>
-            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, fontFamily: "var(--font-display)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Good morning,</p>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, fontFamily: "var(--font-display)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Good day,</p>
             <h2 style={{ fontSize: 20, marginTop: 2 }}>{user?.name?.split(" ")[0]} 👋</h2>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--surface-2)", padding: "7px 12px", borderRadius: 20, border: "1px solid var(--border)" }}>
             <span style={{ fontSize: 13 }}>📍</span>
-            <span style={{ fontSize: 12, fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--text-mid)" }}>Iloilo City</span>
+            <span style={{ fontSize: 12, fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--text-mid)" }}>
+              {areaName}
+            </span>
           </div>
         </div>
       </div>
@@ -28,8 +63,22 @@ export default function HomeScreen() {
           <div className="map-worker-dot" style={{ top: "55%", left: "70%", background: "var(--info-light)" }}>👩‍🔧</div>
           <div className="map-worker-dot" style={{ top: "30%", left: "72%", background: "var(--warning-light)" }}>🧑‍🔧</div>
           <div className="map-worker-dot" style={{ top: "68%", left: "38%", background: "var(--green-light)" }}>👷</div>
-          <div className="map-overlay">8 workers nearby</div>
+          <div className="map-overlay">
+            {location ? "8 workers nearby" : "Detecting location..."}
+          </div>
+          {location && (
+            <div style={{ position: "absolute", top: 10, right: 12, background: "rgba(255,255,255,0.92)", borderRadius: "var(--radius-sm)", padding: "4px 10px", fontSize: 11, fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--green-dark)", border: "1px solid rgba(255,255,255,0.5)" }}>
+              📡 {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+            </div>
+          )}
         </div>
+
+        {/* Location status */}
+        {locError && (
+          <div className="fade-up" style={{ background: "var(--warning-light)", border: "1px solid var(--warning)", borderRadius: "var(--radius-md)", padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#633806" }}>
+            📍 Using default Iloilo City location. Allow location access for better matching.
+          </div>
+        )}
 
         {/* Services */}
         <p className="section-label fade-up-2">What do you need?</p>
