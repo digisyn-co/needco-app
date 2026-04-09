@@ -11,59 +11,61 @@ export const WORKERS = [
 ];
 
 export const SERVICES = [
-  { id: "plumbing",    name: "Plumbing",    icon: "🔧", base: 350, desc: "Leaks, pipes, fixtures" },
-  { id: "electrical",  name: "Electrical",  icon: "⚡", base: 400, desc: "Wiring, panels, outlets" },
-  { id: "cleaning",    name: "Cleaning",    icon: "🧹", base: 250, desc: "Deep clean, maintenance" },
-  { id: "moving",      name: "Moving",      icon: "📦", base: 600, desc: "Packing, transport" },
-  { id: "carpentry",   name: "Carpentry",   icon: "🔨", base: 450, desc: "Furniture, repairs" },
-  { id: "aircon",      name: "Aircon",      icon: "❄️", base: 500, desc: "Install, clean, repair" },
+  { id: "plumbing", name: "Plumbing", icon: "🔧", base: 350, desc: "Leaks, pipes, fixtures" },
+  { id: "electrical", name: "Electrical", icon: "⚡", base: 400, desc: "Wiring, panels, outlets" },
+  { id: "cleaning", name: "Cleaning", icon: "🧹", base: 250, desc: "Deep clean, maintenance" },
+  { id: "moving", name: "Moving", icon: "📦", base: 600, desc: "Packing, transport" },
+  { id: "carpentry", name: "Carpentry", icon: "🔨", base: 450, desc: "Furniture, repairs" },
+  { id: "aircon", name: "Aircon", icon: "❄️", base: 500, desc: "Install, clean, repair" },
 ];
 
 const MOCK_JOBS = [
   { id: 1, service: "Plumbing", desc: "Pipe leak fix", worker: "Miguel Santos", date: "Today", price: 380, status: "active" },
-  { id: 2, service: "Cleaning", desc: "Deep clean – 2BR", worker: "Ana Reyes", date: "Apr 3", price: 250, status: "done" },
+  { id: 2, service: "Cleaning", desc: "Deep clean 2BR", worker: "Ana Reyes", date: "Apr 3", price: 250, status: "done" },
   { id: 3, service: "Electrical", desc: "Panel inspection", worker: "Carlo Dizon", date: "Mar 28", price: 400, status: "done" },
 ];
 
 export function AppProvider({ children }) {
   const [screen, setScreen] = useState("login");
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
   const [jobForm, setJobForm] = useState({});
   const [selectedWorker, setSelectedWorker] = useState(null);
   const [jobs, setJobs] = useState(MOCK_JOBS);
   const [activeJob, setActiveJob] = useState(null);
 
-  useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({ 
-          name: session.user.user_metadata?.full_name || session.user.email, 
-          email: session.user.email,
-          role: "customer",
-          initials: (session.user.user_metadata?.full_name || "U").substring(0, 2).toUpperCase()
-        });
-        setScreen("home");
-      }
+  const saveAndSetUser = async (u) => {
+    await supabase.from("users").upsert({
+      id: u.id,
+      name: u.user_metadata?.full_name || u.email,
+      phone: u.phone || null,
+      role: "customer"
+    }, { onConflict: "id" });
+    setUser({
+      id: u.id,
+      name: u.user_metadata?.full_name || u.email,
+      email: u.email,
+      avatar: u.user_metadata?.avatar_url || null,
+      role: "customer",
+      initials: (u.user_metadata?.full_name || u.email || "U").split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
     });
+    setScreen("home");
+  };
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) await saveAndSetUser(session.user);
+      setLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        setUser({ 
-          name: session.user.user_metadata?.full_name || session.user.email, 
-          email: session.user.email,
-          role: "customer",
-          initials: (session.user.user_metadata?.full_name || "U").substring(0, 2).toUpperCase()
-        });
-        setScreen("home");
+        await saveAndSetUser(session.user);
       } else {
         setUser(null);
         setScreen("login");
       }
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -80,6 +82,14 @@ export function AppProvider({ children }) {
     setActiveJob(newJob);
     setJobs(prev => [newJob, ...prev]);
   };
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1D9E75" }}>
+        <div style={{ color: "#fff", fontFamily: "sans-serif", fontSize: 24, fontWeight: 700 }}>Need.co</div>
+      </div>
+    );
+  }
 
   return (
     <AppContext.Provider value={{ screen, navigate, user, logout, selectedService, setSelectedService, jobForm, setJobForm, selectedWorker, setSelectedWorker, jobs, setJobs, activeJob, setActiveJob, postJob }}>
