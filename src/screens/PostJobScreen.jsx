@@ -1,15 +1,35 @@
 import { useState } from "react";
 import { useApp } from "../context/AppContext";
+import { supabase } from "../supabase";
 
 export default function PostJobScreen() {
-  const { navigate, selectedService, setJobForm } = useApp();
-  const [form, setForm] = useState({ desc: "", address: "45 Iznart St, Iloilo City", when: "Today, ASAP", budget: selectedService?.base || "" });
+  const { navigate, selectedService, setJobForm, user } = useApp();
+  const [form, setForm] = useState({ desc: "", address: "Iloilo City", when: "Today, ASAP", budget: selectedService?.base || "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleNext = () => {
-    setJobForm(form);
-    navigate("match");
+  const handleNext = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data, error: jobError } = await supabase.from("jobs").insert({
+        customer_id: user.id,
+        service: selectedService?.name,
+        description: form.desc,
+        address: form.address,
+        status: "pending",
+        price: form.budget || selectedService?.base
+      }).select().single();
+
+      if (jobError) throw jobError;
+      setJobForm({ ...form, jobId: data.id });
+      navigate("match");
+    } catch(e) {
+      setError("Failed to post job. Please try again.");
+    }
+    setLoading(false);
   };
 
   return (
@@ -32,12 +52,12 @@ export default function PostJobScreen() {
 
         <div className="fade-up-1 input-wrap">
           <label className="input-label">Describe the job</label>
-          <textarea className="input-field" rows={3} placeholder="What needs to be done? E.g. pipe leak under kitchen sink" value={form.desc} onChange={e => update("desc", e.target.value)} />
+          <textarea className="input-field" rows={3} placeholder="What needs to be done? Be specific so workers can prepare." value={form.desc} onChange={e => update("desc", e.target.value)} />
         </div>
 
         <div className="fade-up-2 input-wrap">
           <label className="input-label">Address</label>
-          <input className="input-field" placeholder="Your full address" value={form.address} onChange={e => update("address", e.target.value)} />
+          <input className="input-field" placeholder="Your full address in Iloilo/Pavia" value={form.address} onChange={e => update("address", e.target.value)} />
         </div>
 
         <div className="fade-up-3 input-wrap">
@@ -45,22 +65,31 @@ export default function PostJobScreen() {
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             {["Today, ASAP", "Today, afternoon", "Tomorrow"].map(opt => (
               <button key={opt} onClick={() => update("when", opt)} style={{
-                flex: 1, padding: "8px 4px", border: form.when === opt ? "1.5px solid var(--green)" : "1px solid var(--border-mid)",
-                borderRadius: "var(--radius-sm)", background: form.when === opt ? "var(--green-light)" : "none",
-                fontFamily: "var(--font-display)", fontSize: 11, fontWeight: 600, cursor: "pointer", color: form.when === opt ? "var(--green-dark)" : "var(--text-muted)"
+                flex: 1, padding: "8px 4px",
+                border: form.when === opt ? "1.5px solid var(--green)" : "1px solid var(--border-mid)",
+                borderRadius: "var(--radius-sm)",
+                background: form.when === opt ? "var(--green-light)" : "none",
+                fontFamily: "var(--font-display)", fontSize: 11, fontWeight: 600,
+                cursor: "pointer",
+                color: form.when === opt ? "var(--green-dark)" : "var(--text-muted)"
               }}>{opt}</button>
             ))}
           </div>
-          <input className="input-field" placeholder="Or type custom time" value={form.when} onChange={e => update("when", e.target.value)} />
         </div>
 
         <div className="fade-up-4 input-wrap" style={{ marginBottom: 24 }}>
-          <label className="input-label">Budget (₱)</label>
-          <input className="input-field" type="number" placeholder={`e.g. ${selectedService?.base}`} value={form.budget} onChange={e => update("budget", e.target.value)} />
+          <label className="input-label">Your budget (₱)</label>
+          <input className="input-field" type="number" placeholder={`Suggested: ₱${selectedService?.base}`} value={form.budget} onChange={e => update("budget", e.target.value)} />
         </div>
 
-        <button className="btn btn-primary fade-up-5" onClick={handleNext} disabled={!form.desc}>
-          Find workers nearby →
+        {error && (
+          <div style={{ background: "var(--danger-light)", border: "1px solid var(--danger)", borderRadius: "var(--radius-md)", padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "var(--danger)" }}>
+            {error}
+          </div>
+        )}
+
+        <button className="btn btn-primary fade-up-5" onClick={handleNext} disabled={!form.desc || loading}>
+          {loading ? "Posting job..." : "Find workers nearby →"}
         </button>
       </div>
     </div>
