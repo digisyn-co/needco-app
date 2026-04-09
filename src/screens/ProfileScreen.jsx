@@ -67,6 +67,7 @@ export default function ProfileScreen() {
         </div>
 
         <button className="btn btn-secondary fade-up-3" style={{ marginBottom: 8 }} onClick={() => navigate("workerregister")}>Become a worker 🔧</button>
+        <button className="btn btn-secondary fade-up-3" style={{ marginBottom: 8 }} onClick={() => navigate("workerregister")}>Become a worker 🔧</button>
         <button className="btn btn-danger fade-up-4" onClick={logout}>Sign out</button>
       </div>
     </div>
