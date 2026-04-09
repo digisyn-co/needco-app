@@ -10,6 +10,8 @@ import MyJobsScreen from "./screens/MyJobsScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import WorkerDashboard from "./screens/WorkerDashboard";
 import AdminPanel from "./screens/AdminPanel";
+import WorkerRegisterScreen from "./screens/WorkerRegisterScreen";
+import WorkerRegisterScreen from "./screens/WorkerRegisterScreen";
 import BottomNav from "./components/BottomNav";
 
 function AppRouter() {
@@ -27,6 +29,8 @@ function AppRouter() {
       case "profile": return <ProfileScreen />;
       case "worker": return <WorkerDashboard />;
       case "admin": return <AdminPanel />;
+      case "workerregister": return <WorkerRegisterScreen />;
+      case "workerregister": return <WorkerRegisterScreen />;
       default: return <LoginScreen />;
     }
   };
