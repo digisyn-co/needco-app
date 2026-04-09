@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "../supabase";
 
 const AppContext = createContext(null);
 
@@ -33,14 +34,46 @@ export function AppProvider({ children }) {
   const [jobs, setJobs] = useState(MOCK_JOBS);
   const [activeJob, setActiveJob] = useState(null);
 
+  useEffect(() => {
+    // Check if user is already logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({ 
+          name: session.user.user_metadata?.full_name || session.user.email, 
+          email: session.user.email,
+          role: "customer",
+          initials: (session.user.user_metadata?.full_name || "U").substring(0, 2).toUpperCase()
+        });
+        setScreen("home");
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({ 
+          name: session.user.user_metadata?.full_name || session.user.email, 
+          email: session.user.email,
+          role: "customer",
+          initials: (session.user.user_metadata?.full_name || "U").substring(0, 2).toUpperCase()
+        });
+        setScreen("home");
+      } else {
+        setUser(null);
+        setScreen("login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const navigate = (s) => setScreen(s);
 
-  const login = (role) => {
-    setUser({ name: role === "admin" ? "Admin" : role === "worker" ? "Miguel Santos" : "Juan Dela Cruz", role, initials: role === "admin" ? "AD" : role === "worker" ? "MS" : "JD" });
-    navigate(role === "admin" ? "admin" : role === "worker" ? "worker" : "home");
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    navigate("login");
   };
-
-  const logout = () => { setUser(null); navigate("login"); };
 
   const postJob = (form) => {
     const newJob = { id: Date.now(), service: selectedService?.name, desc: form.desc, worker: selectedWorker?.name || null, date: "Today", price: selectedWorker?.price[selectedService?.name] || selectedService?.base, status: "active" };
@@ -49,7 +82,7 @@ export function AppProvider({ children }) {
   };
 
   return (
-    <AppContext.Provider value={{ screen, navigate, user, login, logout, selectedService, setSelectedService, jobForm, setJobForm, selectedWorker, setSelectedWorker, jobs, setJobs, activeJob, setActiveJob, postJob }}>
+    <AppContext.Provider value={{ screen, navigate, user, logout, selectedService, setSelectedService, jobForm, setJobForm, selectedWorker, setSelectedWorker, jobs, setJobs, activeJob, setActiveJob, postJob }}>
       {children}
     </AppContext.Provider>
   );
