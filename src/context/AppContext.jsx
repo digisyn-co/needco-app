@@ -36,12 +36,14 @@ export function AppProvider({ children }) {
   const [activeJob, setActiveJob] = useState(null);
 
   const saveAndSetUser = async (u) => {
-    await supabase.from("users").upsert({
-      id: u.id,
-      name: u.user_metadata?.full_name || u.email,
-      phone: u.phone || null,
-      role: "customer"
-    }, { onConflict: "id" });
+    try {
+      await supabase.from("users").upsert({
+        id: u.id,
+        name: u.user_metadata?.full_name || u.email,
+        phone: u.phone || null,
+        role: "customer"
+      }, { onConflict: "id" });
+    } catch(e) {}
     setUser({
       id: u.id,
       name: u.user_metadata?.full_name || u.email,
@@ -51,13 +53,27 @@ export function AppProvider({ children }) {
       initials: (u.user_metadata?.full_name || u.email || "U").split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
     });
     setScreen("home");
+    setLoading(false);
   };
 
   useEffect(() => {
+    // Safety timeout - never stay on loading more than 3 seconds
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) await saveAndSetUser(session.user);
+      clearTimeout(timeout);
+      if (session?.user) {
+        await saveAndSetUser(session.user);
+      } else {
+        setLoading(false);
+      }
+    }).catch(() => {
+      clearTimeout(timeout);
       setLoading(false);
     });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         await saveAndSetUser(session.user);
@@ -66,7 +82,11 @@ export function AppProvider({ children }) {
         setScreen("login");
       }
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const navigate = (s) => setScreen(s);
