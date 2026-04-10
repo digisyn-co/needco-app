@@ -11,6 +11,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 import WorkerDashboard from "./screens/WorkerDashboard";
 import AdminPanel from "./screens/AdminPanel";
 import WorkerRegisterScreen from "./screens/WorkerRegisterScreen";
+import ChatScreen from "./screens/ChatScreen";
 import BottomNav from "./components/BottomNav";
 
 function AppRouter() {
@@ -29,6 +30,7 @@ function AppRouter() {
       case "worker": return <WorkerDashboard />;
       case "admin": return <AdminPanel />;
       case "workerregister": return <WorkerRegisterScreen />;
+      case "chat": return <ChatScreen />;
       default: return <LoginScreen />;
     }
   };

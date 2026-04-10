@@ -99,6 +99,7 @@ export default function TrackingScreen() {
           Mark as completed ✓
         </button>
         <button className="btn btn-secondary fade-up-4" style={{ marginTop: 8 }}>Contact worker</button>
+        <button className="btn btn-primary btn-sm" style={{ marginTop: 8 }} onClick={() => navigate("chat")}>💬 Chat with worker</button>
       </div>
     </div>
   );
