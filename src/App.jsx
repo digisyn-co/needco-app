@@ -29,7 +29,6 @@ function AppRouter() {
       case "worker": return <WorkerDashboard />;
       case "admin": return <AdminPanel />;
       case "workerregister": return <WorkerRegisterScreen />;
-      case "workerregister": return <WorkerRegisterScreen />;
       default: return <LoginScreen />;
     }
   };
