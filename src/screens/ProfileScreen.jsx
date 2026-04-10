@@ -1,7 +1,7 @@
 import { useApp } from "../context/AppContext";
 
 export default function ProfileScreen() {
-  const { user, logout, jobs } = useApp();
+  const { user, logout, jobs, navigate } = useApp();
 
   const stats = [
     { label: "Jobs posted", value: jobs.length },
@@ -17,7 +17,7 @@ export default function ProfileScreen() {
       </div>
 
       <div className="scroll-body">
-        {/* Avatar section */}
+        {/* Avatar */}
         <div className="fade-up" style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
           <div className="avatar" style={{ width: 60, height: 60, background: "var(--green-light)", color: "var(--green)", fontSize: 20, fontWeight: 700 }}>
             {user?.initials || "JD"}
@@ -38,12 +38,12 @@ export default function ProfileScreen() {
           ))}
         </div>
 
-        {/* Account details */}
+        {/* Account */}
         <p className="section-label fade-up-2">Account</p>
         <div className="fade-up-2 card" style={{ marginBottom: 16 }}>
           {[
-            ["Phone", "+63 912 345 6789"],
-            ["Email", "juan@email.com"],
+            ["Phone", user?.phone || "+63 912 345 6789"],
+            ["Email", user?.email || "juan@email.com"],
             ["Location", "Iloilo City, PH"],
             ["Member since", "March 2025"],
             ["App version", "Need.co v0.1"],
@@ -55,7 +55,7 @@ export default function ProfileScreen() {
           ))}
         </div>
 
-        {/* Settings */}
+        {/* Preferences */}
         <p className="section-label fade-up-3">Preferences</p>
         <div className="fade-up-3 card" style={{ marginBottom: 20 }}>
           {["Notifications", "Payment methods", "Privacy & security", "Help & support"].map((item, i) => (
@@ -66,8 +66,9 @@ export default function ProfileScreen() {
           ))}
         </div>
 
-        <button className="btn btn-secondary fade-up-3" style={{ marginBottom: 8 }} onClick={() => navigate("workerregister")}>Become a worker 🔧</button>
-        <button className="btn btn-secondary fade-up-3" style={{ marginBottom: 8 }} onClick={() => navigate("workerregister")}>Become a worker 🔧</button>
+        <button className="btn btn-secondary fade-up-4" style={{ marginBottom: 12 }} onClick={() => navigate("workerregister")}>
+          Become a worker 🔧
+        </button>
         <button className="btn btn-danger fade-up-4" onClick={logout}>Sign out</button>
       </div>
     </div>
