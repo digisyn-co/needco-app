@@ -13,22 +13,37 @@ export default function PostJobScreen() {
   const handleNext = async () => {
     setLoading(true);
     setError("");
-    try {
-      const { data, error: jobError } = await supabase.from("jobs").insert({
-        customer_id: user.id,
-        service: selectedService?.name,
-        description: form.desc,
-        address: form.address,
-        status: "pending",
-        price: form.budget || selectedService?.base
-      }).select().single();
 
-      if (jobError) throw jobError;
-      setJobForm({ ...form, jobId: data.id });
+    try {
+      let jobId = null;
+
+      // Only save to DB if user is logged in
+      if (user?.id) {
+        const { data, error: jobError } = await supabase.from("jobs").insert({
+          customer_id: user.id,
+          service: selectedService?.name,
+          description: form.desc,
+          address: form.address,
+          status: "pending",
+          price: Number(form.budget) || selectedService?.base
+        }).select().single();
+
+        if (jobError) {
+          console.error(jobError);
+        } else {
+          jobId = data.id;
+        }
+      }
+
+      setJobForm({ ...form, jobId });
       navigate("match");
     } catch(e) {
-      setError("Failed to post job. Please try again.");
+      console.error(e);
+      // Navigate anyway even if DB save fails
+      setJobForm({ ...form });
+      navigate("match");
     }
+
     setLoading(false);
   };
 
