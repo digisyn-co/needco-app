@@ -11,7 +11,6 @@ import ProfileScreen from "./screens/ProfileScreen";
 import WorkerDashboard from "./screens/WorkerDashboard";
 import AdminPanel from "./screens/AdminPanel";
 import WorkerRegisterScreen from "./screens/WorkerRegisterScreen";
-import WorkerRegisterScreen from "./screens/WorkerRegisterScreen";
 import BottomNav from "./components/BottomNav";
 
 function AppRouter() {
